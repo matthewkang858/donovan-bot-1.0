@@ -80,7 +80,7 @@
             background: #4ecdc4;
             color: white;
             padding: 5px 12px;
-            margin: 0 5px;
+            margin: 0 5px 5px 0;
             border: 2px solid #333;
             font-size: 14px;
         }
@@ -176,19 +176,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .file-upload {
-            margin: 20px 0;
-            padding: 20px;
-            background: #f9f9f9;
-            border: 2px dashed #333;
-        }
-
-        .file-input {
-            font-family: 'VT323', monospace;
-            font-size: 16px;
-            margin: 10px 0;
-        }
-
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -211,42 +198,90 @@
 <body>
     <div class="container">
         <h1 class="title">🤖 Donovan Lunch Bot 1.0</h1>
-        <div class="subtitle">Restaurant Recommender Based on Donovan's Summer Orders</div>
-        
-        <div class="file-upload">
-            <div>📁 Load your CSV file:</div>
-            <input type="file" id="csvFile" class="file-input" accept=".csv">
-            <div style="font-size: 14px; color: #666; margin-top: 10px;">
-                Upload "Donovans Summer Seamless Orders  Data.csv"
-            </div>
-        </div>
+        <div class="subtitle">Restaurant Recommender Based on Donovan's Summer 2025 Orders</div>
         
         <div class="restaurant-display" id="restaurantDisplay">
-            <div class="restaurant-name">Waiting for CSV Upload...</div>
-            <div class="meal-info">Please upload Donovan's data file</div>
+            <div class="restaurant-name">Ready to Pick!</div>
+            <div class="meal-info">37 highly-rated restaurants loaded</div>
             <div class="cuisine-tags">
-                <span class="cuisine-tag">No Data Yet</span>
+                <span class="cuisine-tag">American</span>
+                <span class="cuisine-tag">Asian</span>
+                <span class="cuisine-tag">European</span>
             </div>
             <div class="comments">
-                Upload your CSV file using the file input above to get started
+                Click the button below to get a random recommendation from Donovan's favorites!
             </div>
         </div>
         
-        <button class="pick-button" id="pickButton" disabled>Upload CSV First</button>
+        <button class="pick-button" id="pickButton">Get Recommendation</button>
         
         <div class="stats" id="stats">
-            <div>High-Rated Restaurants Available: <span id="totalRestaurants">0</span></div>
+            <div>High-Rated Restaurants Available: <span id="totalRestaurants">37</span></div>
             <div>Recommendations Given: <span id="pickCount">0</span></div>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script>
     (function() {
         'use strict';
         
-        // Global variables
-        let restaurants = [];
+        // HARDCODED RESTAURANT DATA FROM DONOVAN'S EXCEL FILE
+        // Format: [name, meal, cuisine, subCuisine, type, valueBudget, restaurantQuality, orderQuality, overallScore, wouldHaveAgain, comments]
+        const restaurantDataArray = [
+            ["Arturo's", "Arturo's Fiesta Pizza", "American", "Pizza", "Dinner", 5, 4, 4, 4.333333333, 3, ""],
+            ["Coppola's", "Classic Baked Ziti, Tiramisu", "European", "Italian", "Dinner", 5, 4.5, 3.5, 4.333333333, 4, "HUGE portion with the ziti--definitely share-able. Tiramisu was not amazing"],
+            ["Kossar's Bagels & Bialys", "Kossar's Classic Sandwich", "American", "Sandwich/Deli", "Lunch", 4, 4, 5, 4.333333333, 5, "SO MUCH SALMON"],
+            ["7th Street Burger", "Double Cheeseburger, Fries", "American", "Burger", "Lunch", 4, 5, 4, 4.333333333, 4, ""],
+            ["Skinny Louie", "The Very Best Burger, Fries, Cookies & Cream shake", "American", "Burger", "Lunch", 4, 5, 4, 4.333333333, 5, "Good burger for the value"],
+            ["Soothr Thai Noodle Bar", "Chicken Ki-Mao", "Southeast Asian", "Thai", "Dinner", 5, 4, 3, 4, 4, ""],
+            ["Pecking House", "Chinatown Sandwich", "Asian American", "Chinese/Taiwanese", "Lunch", 4, 4, 4, 4, 5, "Really good Taiwanese sandwich, and HUGE portion"],
+            ["Ichibantei", "Chicken Katsu Curry", "East Asian", "Japanese", "Dinner", 4, 4, 4, 4, 4, "Good katsu curry, decent portion"],
+            ["Hangawi", "Spicy Silky Tofu in Clay Pot, Vermicelli Delight", "East Asian", "Korean", "Dinner", 4, 4, 4, 4, 4, "Pretty good vegan option, nothing exceptional"],
+            ["KJUN", "Seafood Jjajangmyun", "East Asian", "Korean", "Dinner", 4, 4, 4, 4, 4, "Good, came with a lot of sides (although this may have been because of a deal)"],
+            ["Soothr", "Khao Soi Gai", "Southeast Asian", "Thai", "Dinner", 5, 4, 2.5, 3.833333333, 3, "Good price, good restaurant, but there was hardly any chicken in the noodles"],
+            ["Oh K-Dog", "Mozzarella K-Dog, Potato K-Dog", "East Asian", "Korean", "Lunch", 4, 3.5, 4, 3.833333333, 4, "Korean corn dogs, can't go wrong--but tbh regretting not getting something else"],
+            ["Moe's Southwest Grill", "Close Talker Salad (Steak)", "Latin American", "Mexican", "Lunch", 5, 3, 3.5, 3.833333333, 3, "It's hard to mess up a salad in a bowl, but this was solidly okay"],
+            ["Baar Baar", "Delhi Belly Sliders x3, Mango Lassi, Paratha", "Southeast Asian", "Indian", "Lunch", 3, 4.5, 4, 3.833333333, 4, "Pretty good Indian food, but a bit overpriced considering the portion"],
+            ["Chama Mama", "Kharcho", "European", "Georgian", "Dinner", 3, 4, 4.5, 3.833333333, 4, "Georgian restaurant. Hearty soup, tasty, but a bit expensive for what it is"],
+            ["Bodhi Kosher Vegetarian Restaurant", "Beef Fried Rice, Shrimp and Chicken Siu Mai", "Asian American", "Chinese/Taiwanese", "Lunch", 5, 3, 3.5, 3.833333333, 3, "Kosher vegetarian asian food. Unfort the fake meat is kinda mid--flavoring is solid."],
+            ["Ruben's Empanadas", "empanadas", "Latin American", "Empanadas", "Lunch", 4, 3.5, 4, 3.833333333, 4, "Pretty good empanadas"],
+            ["BURRITO BOX", "Build Your Own BURRITO BOX", "Latin American", "Mexican", "Lunch", 4, 3, 4.5, 3.833333333, 3, "Huge portion, but flavoring honestly mid. Chipotle knock-off"],
+            ["Joe's Rice and Noodles", "Sweet and Sour Chicken over rice", "Asian American", "Chinese/Taiwanese", "Dinner", 4, 3.5, 4, 3.833333333, 4, ""],
+            ["Los Tacos No. 1", "pollo and bistec tacos, chips and guac", "Latin American", "Mexican", "Lunch", 3, 4.5, 4, 3.833333333, 5, "Really good tacos, but also kinda expensive for what it is"],
+            ["Joe's Pizza", "Fresh Mozzarella Pie", "American", "Pizza", "Dinner", 4.5, 4, 3, 3.833333333, 3, "Fine NY pizza, nothing exceptional IMO"],
+            ["Hwa Yuan Szechuan", "Wonton in Red Oil, Szechuan Cold Noodles", "East Asian", "Chinese/Taiwanese", "Dinner", 3, 4.5, 4, 3.833333333, 4, "Pretty good Szechuan, but portion was lacking"],
+            ["Parm", "Chicken Parm Hero", "European", "Italian", "Lunch", 3, 4.5, 4, 3.833333333, 4, "Really good chicken parm, but expensive for what it is. There are probably cheaper and just as tasty alternatives"],
+            ["Bread & Butter", "Thai Tea, BYOS", "American", "Sandwich/Deli", "Lunch", 4, 3.5, 3.5, 3.666666667, 3, "Sandwich was mid. There's a better one on campus (but not on seamless)"],
+            ["Tossed", "Mediterranean salad", "American", "Salad", "Lunch", 3, 3.5, 4.5, 3.666666667, 4, "Healthy salad! Pretty tasty"],
+            ["Szechuan Mountain House", "Boiled Fish Fillet in Szechuan Sauce", "East Asian", "Chinese/Taiwanese", "Dinner", 4, 4, 3, 3.666666667, 3, "The seafood was mid"],
+            ["NY Famous Deli & Pizza", "Double Cheeseburger deluxe", "American", "Burger", "Lunch", 5, 3, 3, 3.666666667, 3, "Great price for the meal and huge portion, but the burger was honestly mid"],
+            ["B Side Pizza", "Brooklyn Bridge pie", "American", "Pizza", "Dinner", 4, 3.5, 3, 3.5, 3, "Square slices, nothing too exceptional. They apparently specialize in sandwiches."],
+            ["Jamaican Flavors", "Large Oxtail", "Carribbean", "Jamaican", "Dinner", 4, 3, 3.5, 3.5, 3, "Pretty good for the price, but a bit too salty"],
+            ["The Halal Guys", "Chicken and Beef Gyro Platter", "Middle Eastern", "Mediterranean", "Lunch", 4, 3, 3.5, 3.5, 3, "Classic halal guys (can't go wrong), but didn't blow me away"],
+            ["MaLa Project", "Dry Pot: Dry Pot Base, no added protein, w/ rice", "East Asian", "Chinese/Taiwanese", "Dinner", 3, 4, 3.5, 3.5, 3, "Pretty good Chinese, but nothing exceptional"],
+            ["Lalito", "ceviche and charred corn", "Latin American", "Seafood", "Dinner", 2, 4.5, 4, 3.5, 4, "Solid meal, but the ceviche was TINY"],
+            ["JG Melon", "hamburger and cottage fries", "American", "Burger", "Lunch", 3, 4.5, 3, 3.5, 3, "Renowned burger place, but burger was honestly mid (I think I didn't add bacon or cheese though)"],
+            ["Kiki's", "chicken souvlaki pita", "European", "Greek", "Lunch", 4, 3.5, 3, 3.5, 3, "Pretty good souvlaki, but nothing exceptional"],
+            ["Keste Pizza & Vino Wall Street", "Margherita Napoletana", "European", "Italian", "Lunch", 3, 3.5, 4, 3.5, 3, "Disappointing for a restaurant with >4.7 stars"],
+            ["CAVA", "bowl", "Middle Eastern", "Mediterranean", "Lunch", 4, 3.5, 3, 3.5, 3, "Chipotle but for Mediterranean bowls. Can't go wrong"],
+            ["Mamoun's Falafel", "The Original Combo", "Middle Eastern", "Mediterranean", "Lunch", 4, 3, 3.5, 3.5, 3, "Decent falafel for a good price, nothing amazing"]
+        ];
+        
+        // Convert array data back to objects for easier use
+        const restaurants = restaurantDataArray.map(r => ({
+            name: r[0],
+            meal: r[1],
+            cuisine: r[2],
+            subCuisine: r[3],
+            type: r[4],
+            valueBudget: r[5],
+            restaurantQuality: r[6],
+            orderQuality: r[7],
+            overallScore: r[8],
+            wouldHaveAgain: r[9],
+            comments: r[10]
+        }));
+        
         let pickCount = 0;
         let isSpinning = false;
         
@@ -257,136 +292,13 @@
         
         function init() {
             // Get elements
-            const csvFileInput = document.getElementById('csvFile');
             const restaurantDisplay = document.getElementById('restaurantDisplay');
             const pickButton = document.getElementById('pickButton');
             const pickCountElement = document.getElementById('pickCount');
             const totalRestaurantsElement = document.getElementById('totalRestaurants');
             
-            // Try to automatically load the CSV file from the same directory
-            loadCSVFromURL();
-            
-            async function loadCSVFromURL() {
-                try {
-                    // This will work when hosted on GitHub Pages
-                    const response = await fetch('./Donovans Summer Seamless Orders  Data.csv');
-                    if (response.ok) {
-                        const csvContent = await response.text();
-                        console.log('Loaded CSV from URL');
-                        parseCSVData(csvContent);
-                    } else {
-                        console.log('CSV not found at URL, waiting for manual upload');
-                    }
-                } catch (error) {
-                    console.log('Could not load CSV automatically, waiting for manual upload');
-                    // Try window.fs as fallback for Claude.ai environment
-                    if (window.fs && window.fs.readFile) {
-                        try {
-                            const csvContent = await window.fs.readFile('Donovans Summer Seamless Orders  Data.csv', { encoding: 'utf8' });
-                            console.log('Loaded CSV from window.fs');
-                            parseCSVData(csvContent);
-                        } catch (e) {
-                            console.log('File not available in window.fs either');
-                        }
-                    }
-                }
-            }
-            
-            // File upload handler
-            csvFileInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const csvContent = event.target.result;
-                        parseCSVData(csvContent);
-                    };
-                    reader.readAsText(file);
-                }
-            });
-            
-            function parseCSVData(csvContent) {
-                // Skip the first 3 lines if they're metadata
-                const lines = csvContent.split('\n');
-                let dataToparse = csvContent;
-                
-                // Check if first line doesn't look like headers
-                if (lines[0] && !lines[0].includes('Restuarant')) {
-                    // Skip metadata lines
-                    dataToparse = lines.slice(3).join('\n');
-                }
-                
-                Papa.parse(dataToparse, {
-                    header: true,
-                    dynamicTyping: true,
-                    skipEmptyLines: true,
-                    complete: function(results) {
-                        console.log('Parsed data:', results.data.slice(0, 3));
-                        processRestaurantData(results.data);
-                    },
-                    error: function(error) {
-                        console.error('Parse error:', error);
-                        restaurantDisplay.innerHTML = `
-                            <div class="restaurant-name">Error Parsing CSV</div>
-                            <div class="meal-info">${error.message}</div>
-                            <div class="comments">Please check your CSV format</div>
-                        `;
-                    }
-                });
-            }
-            
-            function processRestaurantData(data) {
-                console.log('Processing restaurant data, total rows:', data.length);
-                
-                // Filter for high-rated restaurants
-                restaurants = data.filter(row => {
-                    const score = parseFloat(row['Overall Score']);
-                    return score && score > 3.5 && row.Restuarant; // Make sure there's a restaurant name
-                }).map(row => ({
-                    name: row.Restuarant || row.Restaurant || 'Unknown Restaurant',
-                    meal: row.Meal || 'Unknown Meal',
-                    cuisine: row['Cuisine(s)'] || 'Unknown',
-                    subCuisine: row['Sub-Cuisine'] || 'Unknown',
-                    type: row['Lunch/Dinner'] || 'Unknown',
-                    valueBudget: parseFloat(row['Value for Budget']) || 0,
-                    restaurantQuality: parseFloat(row['Restaurant Quality']) || 0,
-                    orderQuality: parseFloat(row['Order Quality']) || 0,
-                    overallScore: parseFloat(row['Overall Score']) || 0,
-                    wouldHaveAgain: parseFloat(row['Would Have Again?']) || 0,
-                    comments: row['thoughts, opinions, and suggestions'] || row['Thoughts, opinions, and suggestions'] || ''
-                }));
-                
-                console.log(`Filtered ${restaurants.length} restaurants with score > 3.5`);
-                
-                if (restaurants.length === 0) {
-                    // Try without filter to see what we have
-                    const allRestaurants = data.filter(row => row.Restuarant).length;
-                    restaurantDisplay.innerHTML = `
-                        <div class="restaurant-name">No High-Rated Restaurants Found</div>
-                        <div class="meal-info">Found ${allRestaurants} total restaurants</div>
-                        <div class="comments">No restaurants with Overall Score > 3.5. Check your data.</div>
-                    `;
-                    return;
-                }
-                
-                totalRestaurantsElement.textContent = restaurants.length;
-                pickButton.disabled = false;
-                pickButton.textContent = 'Get Recommendation';
-                
-                // Show unique cuisines
-                const cuisines = [...new Set(restaurants.map(r => r.cuisine))].slice(0, 5);
-                
-                restaurantDisplay.innerHTML = `
-                    <div class="restaurant-name">CSV Loaded Successfully!</div>
-                    <div class="meal-info">Found ${restaurants.length} highly-rated restaurants (score > 3.5)</div>
-                    <div class="cuisine-tags">
-                        ${cuisines.map(c => `<span class="cuisine-tag">${c}</span>`).join('')}
-                    </div>
-                    <div class="comments">
-                        Ready to get recommendations from Donovan's actual order history!
-                    </div>
-                `;
-            }
+            // Update total count
+            totalRestaurantsElement.textContent = restaurants.length;
             
             function getRandomRestaurant() {
                 return restaurants[Math.floor(Math.random() * restaurants.length)];
@@ -398,7 +310,7 @@
                     <div class="meal-info">${restaurant.meal}</div>
                     <div class="cuisine-tags">
                         <span class="cuisine-tag">${restaurant.cuisine}</span>
-                        ${restaurant.subCuisine !== 'Unknown' ? `<span class="cuisine-tag">${restaurant.subCuisine}</span>` : ''}
+                        ${restaurant.subCuisine !== 'Unknown' && restaurant.subCuisine ? `<span class="cuisine-tag">${restaurant.subCuisine}</span>` : ''}
                         <span class="cuisine-tag">${restaurant.type}</span>
                     </div>
                     <div class="ratings-grid">
@@ -420,7 +332,7 @@
                         </div>
                         <div class="rating-item overall-score">
                             <div class="rating-label">Overall Score</div>
-                            <div class="rating-value">⭐ ${restaurant.overallScore.toFixed(1)}/5</div>
+                            <div class="rating-value">⭐ ${restaurant.overallScore.toFixed(2)}/5</div>
                         </div>
                     </div>
                     <div class="comments">
