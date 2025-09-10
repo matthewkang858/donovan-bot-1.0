@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 Donovan Lunch Bot 1.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'VT323', monospace;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #ffffff;
+            border: 4px solid #333;
+            box-shadow: 
+                8px 8px 0px #333,
+                16px 16px 0px rgba(0,0,0,0.1);
+            padding: 40px;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .title {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 0px #ddd;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .restaurant-display {
+            background: #f8f8f8;
+            border: 3px solid #333;
+            padding: 30px;
+            margin: 30px 0;
+            min-height: 200px;
+            text-align: left;
+        }
+
+        .restaurant-name {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .meal-info {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .cuisine-tags {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .cuisine-tag {
+            display: inline-block;
+            background: #4ecdc4;
+            color: white;
+            padding: 5px 12px;
+            margin: 0 5px 5px 0;
+            border: 2px solid #333;
+            font-size: 14px;
+        }
+
+        .ratings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .rating-item {
+            background: #fff;
+            border: 2px solid #333;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .rating-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .rating-value {
+            font-size: 20px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .overall-score {
+            grid-column: span 2;
+            background: #ffe66d !important;
+            font-size: 18px;
+        }
+
+        .comments {
+            background: #f0f0f0;
+            border: 2px solid #333;
+            padding: 15px;
+            margin-top: 15px;
+            font-size: 16px;
+            color: #555;
+            min-height: 50px;
+        }
+
+        .pick-button {
+            font-family: 'VT323', monospace;
+            font-size: 20px;
+            background: #ff6b6b;
+            color: white;
+            border: 3px solid #333;
+            padding: 15px 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 4px 4px 0px #333;
+            text-transform: uppercase;
+        }
+
+        .pick-button:hover {
+            background: #ff5252;
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #333;
+        }
+
+        .pick-button:active {
+            transform: translate(4px, 4px);
+            box-shadow: none;
+        }
+
+        .pick-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 4px 4px 0px #333;
+        }
+
+        .stats {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f0f0f0;
+            border: 2px solid #333;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .title {
+                font-size: 24px;
+            }
+            
+            .ratings-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .overall-score {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🤖 Donovan Lunch Bot 1.0</h1>
+        <div class="subtitle">Restaurant Recommender Based on Donovan's Summer 2025 Orders</div>
+        
+        <div class="restaurant-display" id="restaurantDisplay">
+            <div class="restaurant-name">Ready to Pick!</div>
+            <div class="meal-info">37 highly-rated restaurants loaded</div>
+            <div class="cuisine-tags">
+                <span class="cuisine-tag">American</span>
+                <span class="cuisine-tag">Asian</span>
+                <span class="cuisine-tag">European</span>
+            </div>
+            <div class="comments">
+                Click the button below to get a random recommendation from Donovan's favorites!
+            </div>
+        </div>
+        
+        <button class="pick-button" id="pickButton">Get Recommendation</button>
+        
+        <div class="stats" id="stats">
+            <div>High-Rated Restaurants Available: <span id="totalRestaurants">37</span></div>
+            <div>Recommendations Given: <span id="pickCount">0</span></div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        'use strict';
+        
+        // HARDCODED RESTAURANT DATA FROM DONOVAN'S EXCEL FILE
+        // Format: [name, meal, cuisine, subCuisine, type, valueBudget, restaurantQuality, orderQuality, overallScore, wouldHaveAgain, comments]
+        const restaurantDataArray = [
+            ["Arturo's", "Arturo's Fiesta Pizza", "American", "Pizza", "Dinner", 5, 4, 4, 4.333333333, 3, ""],
+            ["Coppola's", "Classic Baked Ziti, Tiramisu", "European", "Italian", "Dinner", 5, 4.5, 3.5, 4.333333333, 4, "HUGE portion with the ziti--definitely share-able. Tiramisu was not amazing"],
+            ["Kossar's Bagels & Bialys", "Kossar's Classic Sandwich", "American", "Sandwich/Deli", "Lunch", 4, 4, 5, 4.333333333, 5, "SO MUCH SALMON"],
+            ["7th Street Burger", "Double Cheeseburger, Fries", "American", "Burger", "Lunch", 4, 5, 4, 4.333333333, 4, ""],
+            ["Skinny Louie", "The Very Best Burger, Fries, Cookies & Cream shake", "American", "Burger", "Lunch", 4, 5, 4, 4.333333333, 5, "Good burger for the value"],
+            ["Soothr Thai Noodle Bar", "Chicken Ki-Mao", "Southeast Asian", "Thai", "Dinner", 5, 4, 3, 4, 4, ""],
+            ["Pecking House", "Chinatown Sandwich", "Asian American", "Chinese/Taiwanese", "Lunch", 4, 4, 4, 4, 5, "Really good Taiwanese sandwich, and HUGE portion"],
+            ["Ichibantei", "Chicken Katsu Curry", "East Asian", "Japanese", "Dinner", 4, 4, 4, 4, 4, "Good katsu curry, decent portion"],
+            ["Hangawi", "Spicy Silky Tofu in Clay Pot, Vermicelli Delight", "East Asian", "Korean", "Dinner", 4, 4, 4, 4, 4, "Pretty good vegan option, nothing exceptional"],
+            ["KJUN", "Seafood Jjajangmyun", "East Asian", "Korean", "Dinner", 4, 4, 4, 4, 4, "Good, came with a lot of sides (although this may have been because of a deal)"],
+            ["Soothr", "Khao Soi Gai", "Southeast Asian", "Thai", "Dinner", 5, 4, 2.5, 3.833333333, 3, "Good price, good restaurant, but there was hardly any chicken in the noodles"],
+            ["Oh K-Dog", "Mozzarella K-Dog, Potato K-Dog", "East Asian", "Korean", "Lunch", 4, 3.5, 4, 3.833333333, 4, "Korean corn dogs, can't go wrong--but tbh regretting not getting something else"],
+            ["Moe's Southwest Grill", "Close Talker Salad (Steak)", "Latin American", "Mexican", "Lunch", 5, 3, 3.5, 3.833333333, 3, "It's hard to mess up a salad in a bowl, but this was solidly okay"],
+            ["Baar Baar", "Delhi Belly Sliders x3, Mango Lassi, Paratha", "Southeast Asian", "Indian", "Lunch", 3, 4.5, 4, 3.833333333, 4, "Pretty good Indian food, but a bit overpriced considering the portion"],
+            ["Chama Mama", "Kharcho", "European", "Georgian", "Dinner", 3, 4, 4.5, 3.833333333, 4, "Georgian restaurant. Hearty soup, tasty, but a bit expensive for what it is"],
+            ["Bodhi Kosher Vegetarian Restaurant", "Beef Fried Rice, Shrimp and Chicken Siu Mai", "Asian American", "Chinese/Taiwanese", "Lunch", 5, 3, 3.5, 3.833333333, 3, "Kosher vegetarian asian food. Unfort the fake meat is kinda mid--flavoring is solid."],
+            ["Ruben's Empanadas", "empanadas", "Latin American", "Empanadas", "Lunch", 4, 3.5, 4, 3.833333333, 4, "Pretty good empanadas"],
+            ["BURRITO BOX", "Build Your Own BURRITO BOX", "Latin American", "Mexican", "Lunch", 4, 3, 4.5, 3.833333333, 3, "Huge portion, but flavoring honestly mid. Chipotle knock-off"],
+            ["Joe's Rice and Noodles", "Sweet and Sour Chicken over rice", "Asian American", "Chinese/Taiwanese", "Dinner", 4, 3.5, 4, 3.833333333, 4, ""],
+            ["Los Tacos No. 1", "pollo and bistec tacos, chips and guac", "Latin American", "Mexican", "Lunch", 3, 4.5, 4, 3.833333333, 5, "Really good tacos, but also kinda expensive for what it is"],
+            ["Joe's Pizza", "Fresh Mozzarella Pie", "American", "Pizza", "Dinner", 4.5, 4, 3, 3.833333333, 3, "Fine NY pizza, nothing exceptional IMO"],
+            ["Hwa Yuan Szechuan", "Wonton in Red Oil, Szechuan Cold Noodles", "East Asian", "Chinese/Taiwanese", "Dinner", 3, 4.5, 4, 3.833333333, 4, "Pretty good Szechuan, but portion was lacking"],
+            ["Parm", "Chicken Parm Hero", "European", "Italian", "Lunch", 3, 4.5, 4, 3.833333333, 4, "Really good chicken parm, but expensive for what it is. There are probably cheaper and just as tasty alternatives"],
+            ["Bread & Butter", "Thai Tea, BYOS", "American", "Sandwich/Deli", "Lunch", 4, 3.5, 3.5, 3.666666667, 3, "Sandwich was mid. There's a better one on campus (but not on seamless)"],
+            ["Tossed", "Mediterranean salad", "American", "Salad", "Lunch", 3, 3.5, 4.5, 3.666666667, 4, "Healthy salad! Pretty tasty"],
+            ["Szechuan Mountain House", "Boiled Fish Fillet in Szechuan Sauce", "East Asian", "Chinese/Taiwanese", "Dinner", 4, 4, 3, 3.666666667, 3, "The seafood was mid"],
+            ["NY Famous Deli & Pizza", "Double Cheeseburger deluxe", "American", "Burger", "Lunch", 5, 3, 3, 3.666666667, 3, "Great price for the meal and huge portion, but the burger was honestly mid"],
+            ["B Side Pizza", "Brooklyn Bridge pie", "American", "Pizza", "Dinner", 4, 3.5, 3, 3.5, 3, "Square slices, nothing too exceptional. They apparently specialize in sandwiches."],
+            ["Jamaican Flavors", "Large Oxtail", "Carribbean", "Jamaican", "Dinner", 4, 3, 3.5, 3.5, 3, "Pretty good for the price, but a bit too salty"],
+            ["The Halal Guys", "Chicken and Beef Gyro Platter", "Middle Eastern", "Mediterranean", "Lunch", 4, 3, 3.5, 3.5, 3, "Classic halal guys (can't go wrong), but didn't blow me away"],
+            ["MaLa Project", "Dry Pot: Dry Pot Base, no added protein, w/ rice", "East Asian", "Chinese/Taiwanese", "Dinner", 3, 4, 3.5, 3.5, 3, "Pretty good Chinese, but nothing exceptional"],
+            ["Lalito", "ceviche and charred corn", "Latin American", "Seafood", "Dinner", 2, 4.5, 4, 3.5, 4, "Solid meal, but the ceviche was TINY"],
+            ["JG Melon", "hamburger and cottage fries", "American", "Burger", "Lunch", 3, 4.5, 3, 3.5, 3, "Renowned burger place, but burger was honestly mid (I think I didn't add bacon or cheese though)"],
+            ["Kiki's", "chicken souvlaki pita", "European", "Greek", "Lunch", 4, 3.5, 3, 3.5, 3, "Pretty good souvlaki, but nothing exceptional"],
+            ["Keste Pizza & Vino Wall Street", "Margherita Napoletana", "European", "Italian", "Lunch", 3, 3.5, 4, 3.5, 3, "Disappointing for a restaurant with >4.7 stars"],
+            ["CAVA", "bowl", "Middle Eastern", "Mediterranean", "Lunch", 4, 3.5, 3, 3.5, 3, "Chipotle but for Mediterranean bowls. Can't go wrong"],
+            ["Mamoun's Falafel", "The Original Combo", "Middle Eastern", "Mediterranean", "Lunch", 4, 3, 3.5, 3.5, 3, "Decent falafel for a good price, nothing amazing"]
+        ];
+        
+        // Convert array data back to objects for easier use
+        const restaurants = restaurantDataArray.map(r => ({
+            name: r[0],
+            meal: r[1],
+            cuisine: r[2],
+            subCuisine: r[3],
+            type: r[4],
+            valueBudget: r[5],
+            restaurantQuality: r[6],
+            orderQuality: r[7],
+            overallScore: r[8],
+            wouldHaveAgain: r[9],
+            comments: r[10]
+        }));
+        
+        let pickCount = 0;
+        let isSpinning = false;
+        
+        // Wait for DOM to load
+        document.addEventListener('DOMContentLoaded', function() {
+            init();
+        });
+        
+        function init() {
+            // Get elements
+            const restaurantDisplay = document.getElementById('restaurantDisplay');
+            const pickButton = document.getElementById('pickButton');
+            const pickCountElement = document.getElementById('pickCount');
+            const totalRestaurantsElement = document.getElementById('totalRestaurants');
+            
+            // Update total count
+            totalRestaurantsElement.textContent = restaurants.length;
+            
+            function getRandomRestaurant() {
+                return restaurants[Math.floor(Math.random() * restaurants.length)];
+            }
+            
+            function updateDisplay(restaurant) {
+                const html = `
+                    <div class="restaurant-name">${restaurant.name}</div>
+                    <div class="meal-info">${restaurant.meal}</div>
+                    <div class="cuisine-tags">
+                        <span class="cuisine-tag">${restaurant.cuisine}</span>
+                        ${restaurant.subCuisine !== 'Unknown' && restaurant.subCuisine ? `<span class="cuisine-tag">${restaurant.subCuisine}</span>` : ''}
+                        <span class="cuisine-tag">${restaurant.type}</span>
+                    </div>
+                    <div class="ratings-grid">
+                        <div class="rating-item">
+                            <div class="rating-label">Value for Budget</div>
+                            <div class="rating-value">${restaurant.valueBudget.toFixed(1)}/5</div>
+                        </div>
+                        <div class="rating-item">
+                            <div class="rating-label">Restaurant Quality</div>
+                            <div class="rating-value">${restaurant.restaurantQuality.toFixed(1)}/5</div>
+                        </div>
+                        <div class="rating-item">
+                            <div class="rating-label">Order Quality</div>
+                            <div class="rating-value">${restaurant.orderQuality.toFixed(1)}/5</div>
+                        </div>
+                        <div class="rating-item">
+                            <div class="rating-label">Would Have Again?</div>
+                            <div class="rating-value">${restaurant.wouldHaveAgain.toFixed(1)}/5</div>
+                        </div>
+                        <div class="rating-item overall-score">
+                            <div class="rating-label">Overall Score</div>
+                            <div class="rating-value">⭐ ${restaurant.overallScore.toFixed(2)}/5</div>
+                        </div>
+                    </div>
+                    <div class="comments">
+                        <strong>Donovan's notes:</strong> ${restaurant.comments || "No specific comments recorded"}
+                    </div>
+                `;
+                
+                restaurantDisplay.innerHTML = html;
+                restaurantDisplay.classList.remove('fade-in');
+                void restaurantDisplay.offsetWidth;
+                restaurantDisplay.classList.add('fade-in');
+            }
+            
+            function spinAnimation() {
+                let spinCount = 0;
+                const maxSpins = 8;
+                
+                const spinInterval = setInterval(() => {
+                    const randomRestaurant = getRandomRestaurant();
+                    const nameElement = document.querySelector('.restaurant-name');
+                    if (nameElement) {
+                        nameElement.textContent = randomRestaurant.name;
+                    }
+                    
+                    spinCount++;
+                    if (spinCount >= maxSpins) {
+                        clearInterval(spinInterval);
+                        
+                        const finalRestaurant = getRandomRestaurant();
+                        updateDisplay(finalRestaurant);
+                        
+                        pickCount++;
+                        pickCountElement.textContent = pickCount;
+                        pickButton.disabled = false;
+                        pickButton.textContent = 'Get Another Recommendation';
+                        isSpinning = false;
+                    }
+                }, 100);
+            }
+            
+            // Pick button handler
+            pickButton.addEventListener('click', function() {
+                if (isSpinning || restaurants.length === 0) return;
+                
+                isSpinning = true;
+                pickButton.disabled = true;
+                pickButton.textContent = 'Selecting...';
+                
+                spinAnimation();
+            });
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.code === 'Space' || e.code === 'Enter') {
+                    e.preventDefault();
+                    if (!isSpinning && restaurants.length > 0 && !pickButton.disabled) {
+                        pickButton.click();
+                    }
+                }
+            });
+        }
+    })();
+    </script>
+</body>
+</html>
