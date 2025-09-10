@@ -201,92 +201,83 @@
         <div class="subtitle">Restaurant Recommender Based on Donovan's Summer Orders</div>
         
         <div class="restaurant-display" id="restaurantDisplay">
-            <div class="restaurant-name">Ready for a recommendation?</div>
-            <div class="meal-info">Click below to discover Donovan's top picks</div>
+            <div class="restaurant-name">Loading Donovan's Restaurants...</div>
+            <div class="meal-info">Reading data from local CSV file</div>
             <div class="cuisine-tags">
-                <span class="cuisine-tag">From Donovan's Top Recommendations</span>
+                <span class="cuisine-tag">Please Wait</span>
             </div>
             <div class="comments">
-                Based on Donovan's summer 2025 Seamless order history.
+                Loading restaurant data from "Donovan's Summer Seamless Orders - Data.csv"
             </div>
         </div>
         
-        <button class="pick-button" id="pickButton">Get Recommendation</button>
+        <button class="pick-button" id="pickButton" disabled>Loading Data...</button>
         
         <div class="stats" id="stats">
-            <div>High-Rated Restaurants Available: <span id="totalRestaurants">37</span></div>
+            <div>High-Rated Restaurants Available: <span id="totalRestaurants">0</span></div>
             <div>Recommendations Given: <span id="pickCount">0</span></div>
         </div>
     </div>
 
-    <script>
-        // Restaurant data from Donovan's CSV (restaurants with rating > 3.5)
-        const restaurants = [
-            { name: "Arturo's", meal: "Arturo's Fiesta Pizza", cuisine: "American", subCuisine: "Pizza", type: "Dinner", valueBudget: 5, restaurantQuality: 4, orderQuality: 4, overallScore: 4.3, wouldHaveAgain: 3, comments: "" },
-            { name: "Coppola's", meal: "Classic Baked Ziti, Tiramisu", cuisine: "European", subCuisine: "Italian", type: "Dinner", valueBudget: 5, restaurantQuality: 4, orderQuality: 4, overallScore: 4.3, wouldHaveAgain: 2, comments: "" },
-            { name: "Kossar's Bagels & Bialys", meal: "Kossar's Classic Sandwich", cuisine: "American", subCuisine: "Bagels", type: "Lunch", valueBudget: 4, restaurantQuality: 4, orderQuality: 5, overallScore: 4.3, wouldHaveAgain: 2, comments: "SO MUCH SALMON" },
-            { name: "7th Street Burger", meal: "Double Cheeseburger, Fries", cuisine: "American", subCuisine: "Burgers", type: "Lunch", valueBudget: 5, restaurantQuality: 3, orderQuality: 5, overallScore: 4.3, wouldHaveAgain: 3, comments: "" },
-            { name: "Skinny Louie", meal: "The Very Best Burger, Fries, Cookies & Cream shake", cuisine: "American", subCuisine: "Burgers", type: "Lunch", valueBudget: 4, restaurantQuality: 4, orderQuality: 5, overallScore: 4.3, wouldHaveAgain: 3, comments: "" },
-            { name: "Soothr Thai Noodle Bar", meal: "Chicken Ki-Mao", cuisine: "Southeast Asian", subCuisine: "Thai", type: "Dinner", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Pecking House", meal: "Chinatown Sandwich", cuisine: "Asian American", subCuisine: "Fusion", type: "Lunch", valueBudget: 3, restaurantQuality: 4, orderQuality: 5, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Ichibantei", meal: "Chicken Katsu Curry", cuisine: "East Asian", subCuisine: "Japanese", type: "Dinner", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Han Dynasty", meal: "Sichuan Wontons in Chili Oil, Dry Pot Chicken", cuisine: "East Asian", subCuisine: "Szechuan", type: "Dinner", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Di Fara", meal: "Classic Pizza", cuisine: "American", subCuisine: "Pizza", type: "Dinner", valueBudget: 3, restaurantQuality: 5, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "The Meatball Shop", meal: "Classic Beef, Spicy Pork, Veggie Ball", cuisine: "American", subCuisine: "Meatballs", type: "Lunch", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "BALLS" },
-            { name: "Prince Street Pizza", meal: "Pepperoni Square", cuisine: "American", subCuisine: "Pizza", type: "Lunch", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Levain Bakery", meal: "Chocolate Chip Walnut Cookie", cuisine: "American", subCuisine: "Bakery", type: "Lunch", valueBudget: 3, restaurantQuality: 5, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Katz's Delicatessen", meal: "Pastrami on Rye", cuisine: "American", subCuisine: "Deli", type: "Lunch", valueBudget: 3, restaurantQuality: 5, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "expensive but amazing, go for a special occasion" },
-            { name: "Tasty Hand Pulled Noodles", meal: "Beef Noodle Soup", cuisine: "East Asian", subCuisine: "Chinese", type: "Lunch", valueBudget: 5, restaurantQuality: 4, orderQuality: 3, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Pylos", meal: "Lamb Souvlaki, Greek Salad", cuisine: "European", subCuisine: "Greek", type: "Dinner", valueBudget: 3, restaurantQuality: 4, orderQuality: 5, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Los Tacos No. 1", meal: "Al Pastor, Carnitas Tacos", cuisine: "Latin American", subCuisine: "Mexican", type: "Lunch", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Joe's Pizza", meal: "Classic Cheese Slice", cuisine: "American", subCuisine: "Pizza", type: "Lunch", valueBudget: 5, restaurantQuality: 3, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Russ & Daughters", meal: "Classic Bagel with Lox", cuisine: "American", subCuisine: "Bagels", type: "Lunch", valueBudget: 3, restaurantQuality: 5, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Clinton Market", meal: "Breakfast Sandwich", cuisine: "American", subCuisine: "Deli", type: "Lunch", valueBudget: 5, restaurantQuality: 3, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Eileen's Special Cheesecake", meal: "Original Cheesecake", cuisine: "American", subCuisine: "Dessert", type: "Lunch", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Pongri Thai", meal: "Pad Thai", cuisine: "Southeast Asian", subCuisine: "Thai", type: "Dinner", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Xi'an Famous Foods", meal: "Spicy Cumin Lamb Noodles", cuisine: "East Asian", subCuisine: "Chinese", type: "Lunch", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Vanessa's Dumpling House", meal: "Pork & Chive Dumplings", cuisine: "East Asian", subCuisine: "Chinese", type: "Lunch", valueBudget: 5, restaurantQuality: 4, orderQuality: 3, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Rubirosa", meal: "Vodka Pizza", cuisine: "American", subCuisine: "Pizza", type: "Dinner", valueBudget: 3, restaurantQuality: 4, orderQuality: 5, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Nom Wah Tea Parlor", meal: "Har Gow, Siu Mai", cuisine: "East Asian", subCuisine: "Dim Sum", type: "Lunch", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Mamoun's Falafel", meal: "Falafel Sandwich", cuisine: "Middle Eastern", subCuisine: "Falafel", type: "Lunch", valueBudget: 5, restaurantQuality: 3, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Joe's Shanghai", meal: "Soup Dumplings", cuisine: "East Asian", subCuisine: "Chinese", type: "Lunch", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Halal Guys", meal: "Chicken and Rice", cuisine: "Middle Eastern", subCuisine: "Halal", type: "Lunch", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Birria-Landia", meal: "Birria Tacos", cuisine: "Latin American", subCuisine: "Mexican", type: "Lunch", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Tim Ho Wan", meal: "BBQ Pork Buns", cuisine: "East Asian", subCuisine: "Dim Sum", type: "Lunch", valueBudget: 3, restaurantQuality: 5, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Gramercy Tavern", meal: "Seasonal Tasting Menu", cuisine: "American", subCuisine: "Fine Dining", type: "Dinner", valueBudget: 2, restaurantQuality: 5, orderQuality: 5, overallScore: 4.0, wouldHaveAgain: 3, comments: "expensive but worth it for special occasions" },
-            { name: "Shake Shack", meal: "ShackBurger, Fries, Shake", cuisine: "American", subCuisine: "Burgers", type: "Lunch", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Economy Candy", meal: "Assorted Candy", cuisine: "American", subCuisine: "Candy", type: "Lunch", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Yonah Schimmel", meal: "Potato Knish", cuisine: "American", subCuisine: "Jewish", type: "Lunch", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" },
-            { name: "Balthazar", meal: "French Onion Soup, Steak Frites", cuisine: "European", subCuisine: "French", type: "Dinner", valueBudget: 2, restaurantQuality: 5, orderQuality: 5, overallScore: 4.0, wouldHaveAgain: 3, comments: "pricey but great atmosphere and food" },
-            { name: "Veselka", meal: "Pierogi, Borscht", cuisine: "European", subCuisine: "Ukrainian", type: "Dinner", valueBudget: 4, restaurantQuality: 4, orderQuality: 4, overallScore: 4.0, wouldHaveAgain: 3, comments: "" }
-        ];
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</body>
+</html>
 
-        let pickCount = 0;
-        let isSpinning = false;
-
+<script>
+// Move ALL JavaScript to the very bottom after the body closes
+(function() {
+    'use strict';
+    
+    // Global variables
+    let restaurants = [];
+    let pickCount = 0;
+    let isSpinning = false;
+    
+    // Wait for everything to load
+    window.addEventListener('load', function() {
+        init();
+    });
+    
+    function init() {
+        // Get elements - they definitely exist now
         const restaurantDisplay = document.getElementById('restaurantDisplay');
         const pickButton = document.getElementById('pickButton');
         const pickCountElement = document.getElementById('pickCount');
         const totalRestaurantsElement = document.getElementById('totalRestaurants');
-        const csvFileInput = document.getElementById('csvFileInput');
-
-        // CSV File handling
-        csvFileInput.addEventListener('change', handleCSVFile);
-
-        function handleCSVFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const csvContent = e.target.result;
-                parseCSVData(csvContent);
-            };
-            reader.readAsText(file);
+        
+        // Double check elements exist
+        if (!restaurantDisplay || !pickButton || !pickCountElement || !totalRestaurantsElement) {
+            console.error('Missing required elements');
+            return;
         }
-
+        
+        // Load CSV file
+        loadCSVFile();
+        
+        async function loadCSVFile() {
+            try {
+                const response = await fetch("Donovan's Summer Seamless Orders - Data.csv");
+                if (!response.ok) {
+                    throw new Error('CSV file not found');
+                }
+                const csvContent = await response.text();
+                parseCSVData(csvContent);
+            } catch (error) {
+                console.error('Error loading CSV:', error);
+                restaurantDisplay.innerHTML = `
+                    <div class="restaurant-name">Error Loading Data</div>
+                    <div class="meal-info">Could not find "Donovan's Summer Seamless Orders - Data.csv"</div>
+                    <div class="cuisine-tags">
+                        <span class="cuisine-tag">File Missing</span>
+                    </div>
+                    <div class="comments">
+                        Make sure "Donovan's Summer Seamless Orders - Data.csv" is in the same folder as this HTML file
+                    </div>
+                `;
+            }
+        }
+        
         function parseCSVData(csvContent) {
-            // Skip the first 3 header lines (title, description, column headers)
             const lines = csvContent.split('\n');
             const dataLines = lines.slice(3).join('\n');
             
@@ -299,9 +290,8 @@
                 }
             });
         }
-
+        
         function processRestaurantData(data) {
-            // Filter for restaurants with rating > 3.5 and clean the data
             restaurants = data.filter(row => {
                 return row['Overall Score'] && row['Overall Score'] > 3.5;
             }).map(row => ({
@@ -317,15 +307,11 @@
                 wouldHaveAgain: row['Would Have Again?'] || 0,
                 comments: row['thoughts, opinions, and suggestions'] || ''
             }));
-
-            // Update the display
-            totalRestaurantsElement.textContent = restaurants.length;
             
-            // Enable the button and update display
+            totalRestaurantsElement.textContent = restaurants.length;
             pickButton.disabled = false;
             pickButton.textContent = 'Get Recommendation';
             
-            // Show success message
             restaurantDisplay.innerHTML = `
                 <div class="restaurant-name">CSV Loaded Successfully!</div>
                 <div class="meal-info">Found ${restaurants.length} highly-rated restaurants</div>
@@ -337,13 +323,11 @@
                 </div>
             `;
         }
-
-        totalRestaurantsElement.textContent = 0;
-
+        
         function getRandomRestaurant() {
             return restaurants[Math.floor(Math.random() * restaurants.length)];
         }
-
+        
         function updateDisplay(restaurant) {
             const html = `
                 <div class="restaurant-name">${restaurant.name}</div>
@@ -381,41 +365,40 @@
             `;
             
             restaurantDisplay.innerHTML = html;
-            
-            // Add fade-in animation
             restaurantDisplay.classList.remove('fade-in');
-            void restaurantDisplay.offsetWidth; // Trigger reflow
+            void restaurantDisplay.offsetWidth;
             restaurantDisplay.classList.add('fade-in');
         }
-
+        
         function spinAnimation() {
             let spinCount = 0;
             const maxSpins = 8;
             
             const spinInterval = setInterval(() => {
                 const randomRestaurant = getRandomRestaurant();
-                // ONLY change the restaurant name - no emojis, no squares
-                document.querySelector('.restaurant-name').textContent = randomRestaurant.name;
+                const nameElement = document.querySelector('.restaurant-name');
+                if (nameElement) {
+                    nameElement.textContent = randomRestaurant.name;
+                }
                 
                 spinCount++;
                 if (spinCount >= maxSpins) {
                     clearInterval(spinInterval);
                     
-                    // Final selection
                     const finalRestaurant = getRandomRestaurant();
                     updateDisplay(finalRestaurant);
                     
                     pickCount++;
                     pickCountElement.textContent = pickCount;
-                    
                     pickButton.disabled = false;
                     pickButton.textContent = 'Get Another Recommendation';
                     isSpinning = false;
                 }
             }, 100);
         }
-
-        pickButton.addEventListener('click', () => {
+        
+        // Event listeners - elements definitely exist
+        pickButton.addEventListener('click', function() {
             if (isSpinning || restaurants.length === 0) return;
             
             isSpinning = true;
@@ -424,9 +407,8 @@
             
             spinAnimation();
         });
-
-        // Keyboard shortcut
-        document.addEventListener('keydown', (e) => {
+        
+        document.addEventListener('keydown', function(e) {
             if (e.code === 'Space' || e.code === 'Enter') {
                 e.preventDefault();
                 if (!isSpinning && restaurants.length > 0) {
@@ -434,6 +416,6 @@
                 }
             }
         });
-    </script>
-</body>
-</html>
+    }
+})();
+</script>
