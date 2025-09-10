@@ -176,6 +176,19 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        .file-upload {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border: 2px dashed #333;
+        }
+
+        .file-input {
+            font-family: 'VT323', monospace;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -200,18 +213,26 @@
         <h1 class="title">🤖 Donovan Lunch Bot 1.0</h1>
         <div class="subtitle">Restaurant Recommender Based on Donovan's Summer Orders</div>
         
-        <div class="restaurant-display" id="restaurantDisplay">
-            <div class="restaurant-name">Loading Donovan's Restaurants...</div>
-            <div class="meal-info">Reading data from local CSV file</div>
-            <div class="cuisine-tags">
-                <span class="cuisine-tag">Please Wait</span>
-            </div>
-            <div class="comments">
-                Loading restaurant data from "Donovans Summer Seamless Orders  Data.csv"
+        <div class="file-upload">
+            <div>📁 Load your CSV file:</div>
+            <input type="file" id="csvFile" class="file-input" accept=".csv">
+            <div style="font-size: 14px; color: #666; margin-top: 10px;">
+                Upload "Donovans Summer Seamless Orders  Data.csv"
             </div>
         </div>
         
-        <button class="pick-button" id="pickButton" disabled>Loading Data...</button>
+        <div class="restaurant-display" id="restaurantDisplay">
+            <div class="restaurant-name">Waiting for CSV Upload...</div>
+            <div class="meal-info">Please upload Donovan's data file</div>
+            <div class="cuisine-tags">
+                <span class="cuisine-tag">No Data Yet</span>
+            </div>
+            <div class="comments">
+                Upload your CSV file using the file input above to get started
+            </div>
+        </div>
+        
+        <button class="pick-button" id="pickButton" disabled>Upload CSV First</button>
         
         <div class="stats" id="stats">
             <div>High-Rated Restaurants Available: <span id="totalRestaurants">0</span></div>
@@ -220,210 +241,248 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-</body>
-</html>
-
-<script>
-// Move ALL JavaScript to the very bottom after the body closes
-(function() {
-    'use strict';
-    
-    // Global variables
-    let restaurants = [];
-    let pickCount = 0;
-    let isSpinning = false;
-    
-    // Wait for everything to load
-    window.addEventListener('load', function() {
-        init();
-    });
-    
-    function init() {
-        // Get elements - they definitely exist now
-        const restaurantDisplay = document.getElementById('restaurantDisplay');
-        const pickButton = document.getElementById('pickButton');
-        const pickCountElement = document.getElementById('pickCount');
-        const totalRestaurantsElement = document.getElementById('totalRestaurants');
+    <script>
+    (function() {
+        'use strict';
         
-        // Double check elements exist
-        if (!restaurantDisplay || !pickButton || !pickCountElement || !totalRestaurantsElement) {
-            console.error('Missing required elements');
-            return;
-        }
+        // Global variables
+        let restaurants = [];
+        let pickCount = 0;
+        let isSpinning = false;
         
-        // Load CSV file
-        loadCSVFile();
+        // Wait for DOM to load
+        document.addEventListener('DOMContentLoaded', function() {
+            init();
+        });
         
-        async function loadCSVFile() {
-            try {
-                const response = await fetch("Donovan's Summer Seamless Orders - Data.csv");
-                if (!response.ok) {
-                    throw new Error('CSV file not found');
+        function init() {
+            // Get elements
+            const csvFileInput = document.getElementById('csvFile');
+            const restaurantDisplay = document.getElementById('restaurantDisplay');
+            const pickButton = document.getElementById('pickButton');
+            const pickCountElement = document.getElementById('pickCount');
+            const totalRestaurantsElement = document.getElementById('totalRestaurants');
+            
+            // Try to automatically load the CSV file from the same directory
+            loadCSVFromURL();
+            
+            async function loadCSVFromURL() {
+                try {
+                    // This will work when hosted on GitHub Pages
+                    const response = await fetch('./Donovans Summer Seamless Orders  Data.csv');
+                    if (response.ok) {
+                        const csvContent = await response.text();
+                        console.log('Loaded CSV from URL');
+                        parseCSVData(csvContent);
+                    } else {
+                        console.log('CSV not found at URL, waiting for manual upload');
+                    }
+                } catch (error) {
+                    console.log('Could not load CSV automatically, waiting for manual upload');
+                    // Try window.fs as fallback for Claude.ai environment
+                    if (window.fs && window.fs.readFile) {
+                        try {
+                            const csvContent = await window.fs.readFile('Donovans Summer Seamless Orders  Data.csv', { encoding: 'utf8' });
+                            console.log('Loaded CSV from window.fs');
+                            parseCSVData(csvContent);
+                        } catch (e) {
+                            console.log('File not available in window.fs either');
+                        }
+                    }
                 }
-                const csvContent = await response.text();
-                parseCSVData(csvContent);
-            } catch (error) {
-                console.error('Error loading CSV:', error);
+            }
+            
+            // File upload handler
+            csvFileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const csvContent = event.target.result;
+                        parseCSVData(csvContent);
+                    };
+                    reader.readAsText(file);
+                }
+            });
+            
+            function parseCSVData(csvContent) {
+                // Skip the first 3 lines if they're metadata
+                const lines = csvContent.split('\n');
+                let dataToparse = csvContent;
+                
+                // Check if first line doesn't look like headers
+                if (lines[0] && !lines[0].includes('Restuarant')) {
+                    // Skip metadata lines
+                    dataToparse = lines.slice(3).join('\n');
+                }
+                
+                Papa.parse(dataToparse, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        console.log('Parsed data:', results.data.slice(0, 3));
+                        processRestaurantData(results.data);
+                    },
+                    error: function(error) {
+                        console.error('Parse error:', error);
+                        restaurantDisplay.innerHTML = `
+                            <div class="restaurant-name">Error Parsing CSV</div>
+                            <div class="meal-info">${error.message}</div>
+                            <div class="comments">Please check your CSV format</div>
+                        `;
+                    }
+                });
+            }
+            
+            function processRestaurantData(data) {
+                console.log('Processing restaurant data, total rows:', data.length);
+                
+                // Filter for high-rated restaurants
+                restaurants = data.filter(row => {
+                    const score = parseFloat(row['Overall Score']);
+                    return score && score > 3.5 && row.Restuarant; // Make sure there's a restaurant name
+                }).map(row => ({
+                    name: row.Restuarant || row.Restaurant || 'Unknown Restaurant',
+                    meal: row.Meal || 'Unknown Meal',
+                    cuisine: row['Cuisine(s)'] || 'Unknown',
+                    subCuisine: row['Sub-Cuisine'] || 'Unknown',
+                    type: row['Lunch/Dinner'] || 'Unknown',
+                    valueBudget: parseFloat(row['Value for Budget']) || 0,
+                    restaurantQuality: parseFloat(row['Restaurant Quality']) || 0,
+                    orderQuality: parseFloat(row['Order Quality']) || 0,
+                    overallScore: parseFloat(row['Overall Score']) || 0,
+                    wouldHaveAgain: parseFloat(row['Would Have Again?']) || 0,
+                    comments: row['thoughts, opinions, and suggestions'] || row['Thoughts, opinions, and suggestions'] || ''
+                }));
+                
+                console.log(`Filtered ${restaurants.length} restaurants with score > 3.5`);
+                
+                if (restaurants.length === 0) {
+                    // Try without filter to see what we have
+                    const allRestaurants = data.filter(row => row.Restuarant).length;
+                    restaurantDisplay.innerHTML = `
+                        <div class="restaurant-name">No High-Rated Restaurants Found</div>
+                        <div class="meal-info">Found ${allRestaurants} total restaurants</div>
+                        <div class="comments">No restaurants with Overall Score > 3.5. Check your data.</div>
+                    `;
+                    return;
+                }
+                
+                totalRestaurantsElement.textContent = restaurants.length;
+                pickButton.disabled = false;
+                pickButton.textContent = 'Get Recommendation';
+                
+                // Show unique cuisines
+                const cuisines = [...new Set(restaurants.map(r => r.cuisine))].slice(0, 5);
+                
                 restaurantDisplay.innerHTML = `
-                    <div class="restaurant-name">Error Loading Data</div>
-                    <div class="meal-info">Could not find "Donovan's Summer Seamless Orders - Data.csv"</div>
+                    <div class="restaurant-name">CSV Loaded Successfully!</div>
+                    <div class="meal-info">Found ${restaurants.length} highly-rated restaurants (score > 3.5)</div>
                     <div class="cuisine-tags">
-                        <span class="cuisine-tag">File Missing</span>
+                        ${cuisines.map(c => `<span class="cuisine-tag">${c}</span>`).join('')}
                     </div>
                     <div class="comments">
-                        Make sure "Donovan's Summer Seamless Orders - Data.csv" is in the same folder as this HTML file
+                        Ready to get recommendations from Donovan's actual order history!
                     </div>
                 `;
             }
-        }
-        
-        function parseCSVData(csvContent) {
-            const lines = csvContent.split('\n');
-            const dataLines = lines.slice(3).join('\n');
             
-            Papa.parse(dataLines, {
-                header: true,
-                dynamicTyping: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    processRestaurantData(results.data);
+            function getRandomRestaurant() {
+                return restaurants[Math.floor(Math.random() * restaurants.length)];
+            }
+            
+            function updateDisplay(restaurant) {
+                const html = `
+                    <div class="restaurant-name">${restaurant.name}</div>
+                    <div class="meal-info">${restaurant.meal}</div>
+                    <div class="cuisine-tags">
+                        <span class="cuisine-tag">${restaurant.cuisine}</span>
+                        ${restaurant.subCuisine !== 'Unknown' ? `<span class="cuisine-tag">${restaurant.subCuisine}</span>` : ''}
+                        <span class="cuisine-tag">${restaurant.type}</span>
+                    </div>
+                    <div class="ratings-grid">
+                        <div class="rating-item">
+                            <div class="rating-label">Value for Budget</div>
+                            <div class="rating-value">${restaurant.valueBudget.toFixed(1)}/5</div>
+                        </div>
+                        <div class="rating-item">
+                            <div class="rating-label">Restaurant Quality</div>
+                            <div class="rating-value">${restaurant.restaurantQuality.toFixed(1)}/5</div>
+                        </div>
+                        <div class="rating-item">
+                            <div class="rating-label">Order Quality</div>
+                            <div class="rating-value">${restaurant.orderQuality.toFixed(1)}/5</div>
+                        </div>
+                        <div class="rating-item">
+                            <div class="rating-label">Would Have Again?</div>
+                            <div class="rating-value">${restaurant.wouldHaveAgain.toFixed(1)}/5</div>
+                        </div>
+                        <div class="rating-item overall-score">
+                            <div class="rating-label">Overall Score</div>
+                            <div class="rating-value">⭐ ${restaurant.overallScore.toFixed(1)}/5</div>
+                        </div>
+                    </div>
+                    <div class="comments">
+                        <strong>Donovan's notes:</strong> ${restaurant.comments || "No specific comments recorded"}
+                    </div>
+                `;
+                
+                restaurantDisplay.innerHTML = html;
+                restaurantDisplay.classList.remove('fade-in');
+                void restaurantDisplay.offsetWidth;
+                restaurantDisplay.classList.add('fade-in');
+            }
+            
+            function spinAnimation() {
+                let spinCount = 0;
+                const maxSpins = 8;
+                
+                const spinInterval = setInterval(() => {
+                    const randomRestaurant = getRandomRestaurant();
+                    const nameElement = document.querySelector('.restaurant-name');
+                    if (nameElement) {
+                        nameElement.textContent = randomRestaurant.name;
+                    }
+                    
+                    spinCount++;
+                    if (spinCount >= maxSpins) {
+                        clearInterval(spinInterval);
+                        
+                        const finalRestaurant = getRandomRestaurant();
+                        updateDisplay(finalRestaurant);
+                        
+                        pickCount++;
+                        pickCountElement.textContent = pickCount;
+                        pickButton.disabled = false;
+                        pickButton.textContent = 'Get Another Recommendation';
+                        isSpinning = false;
+                    }
+                }, 100);
+            }
+            
+            // Pick button handler
+            pickButton.addEventListener('click', function() {
+                if (isSpinning || restaurants.length === 0) return;
+                
+                isSpinning = true;
+                pickButton.disabled = true;
+                pickButton.textContent = 'Selecting...';
+                
+                spinAnimation();
+            });
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.code === 'Space' || e.code === 'Enter') {
+                    e.preventDefault();
+                    if (!isSpinning && restaurants.length > 0 && !pickButton.disabled) {
+                        pickButton.click();
+                    }
                 }
             });
         }
-        
-        function processRestaurantData(data) {
-            console.log('Processing restaurant data, total rows:', data.length);
-            console.log('Sample row:', data[0]);
-            
-            restaurants = data.filter(row => {
-                const score = row['Overall Score'];
-                console.log(`Restaurant: ${row.Restuarant}, Score: ${score}`);
-                return score && score > 3.5;
-            }).map(row => ({
-                name: row.Restuarant || 'Unknown Restaurant',
-                meal: row.Meal || 'Unknown Meal',
-                cuisine: row['Cuisine(s)'] || 'Unknown',
-                subCuisine: row['Sub-Cuisine'] || 'Unknown',
-                type: row['Lunch/Dinner'] || 'Unknown',
-                valueBudget: row['Value for Budget'] || 0,
-                restaurantQuality: row['Restaurant Quality'] || 0,
-                orderQuality: row['Order Quality'] || 0,
-                overallScore: row['Overall Score'] || 0,
-                wouldHaveAgain: row['Would Have Again?'] || 0,
-                comments: row['thoughts, opinions, and suggestions'] || ''
-            }));
-            
-            console.log(`Filtered ${restaurants.length} restaurants with score > 3.5`);
-            console.log('Sample restaurant:', restaurants[0]);
-            
-            totalRestaurantsElement.textContent = restaurants.length;
-            pickButton.disabled = false;
-            pickButton.textContent = 'Get Recommendation';
-            
-            restaurantDisplay.innerHTML = `
-                <div class="restaurant-name">CSV Loaded Successfully!</div>
-                <div class="meal-info">Found ${restaurants.length} highly-rated restaurants</div>
-                <div class="cuisine-tags">
-                    <span class="cuisine-tag">From Donovan's Top Recommendations</span>
-                </div>
-                <div class="comments">
-                    Ready to get recommendations from Donovan's actual order history!
-                </div>
-            `;
-        }
-        
-        function getRandomRestaurant() {
-            return restaurants[Math.floor(Math.random() * restaurants.length)];
-        }
-        
-        function updateDisplay(restaurant) {
-            const html = `
-                <div class="restaurant-name">${restaurant.name}</div>
-                <div class="meal-info">${restaurant.meal}</div>
-                <div class="cuisine-tags">
-                    <span class="cuisine-tag">${restaurant.cuisine}</span>
-                    <span class="cuisine-tag">${restaurant.subCuisine}</span>
-                    <span class="cuisine-tag">${restaurant.type}</span>
-                </div>
-                <div class="ratings-grid">
-                    <div class="rating-item">
-                        <div class="rating-label">Value for Budget</div>
-                        <div class="rating-value">${restaurant.valueBudget}/5</div>
-                    </div>
-                    <div class="rating-item">
-                        <div class="rating-label">Restaurant Quality</div>
-                        <div class="rating-value">${restaurant.restaurantQuality}/5</div>
-                    </div>
-                    <div class="rating-item">
-                        <div class="rating-label">Order Quality</div>
-                        <div class="rating-value">${restaurant.orderQuality}/5</div>
-                    </div>
-                    <div class="rating-item">
-                        <div class="rating-label">Would Have Again?</div>
-                        <div class="rating-value">${restaurant.wouldHaveAgain}/5</div>
-                    </div>
-                    <div class="rating-item overall-score">
-                        <div class="rating-label">Overall Score</div>
-                        <div class="rating-value">${restaurant.overallScore}/5</div>
-                    </div>
-                </div>
-                <div class="comments">
-                    <strong>Donovan's notes:</strong> ${restaurant.comments || "No specific comments recorded"}
-                </div>
-            `;
-            
-            restaurantDisplay.innerHTML = html;
-            restaurantDisplay.classList.remove('fade-in');
-            void restaurantDisplay.offsetWidth;
-            restaurantDisplay.classList.add('fade-in');
-        }
-        
-        function spinAnimation() {
-            let spinCount = 0;
-            const maxSpins = 8;
-            
-            const spinInterval = setInterval(() => {
-                const randomRestaurant = getRandomRestaurant();
-                const nameElement = document.querySelector('.restaurant-name');
-                if (nameElement) {
-                    nameElement.textContent = randomRestaurant.name;
-                }
-                
-                spinCount++;
-                if (spinCount >= maxSpins) {
-                    clearInterval(spinInterval);
-                    
-                    const finalRestaurant = getRandomRestaurant();
-                    updateDisplay(finalRestaurant);
-                    
-                    pickCount++;
-                    pickCountElement.textContent = pickCount;
-                    pickButton.disabled = false;
-                    pickButton.textContent = 'Get Another Recommendation';
-                    isSpinning = false;
-                }
-            }, 100);
-        }
-        
-        // Event listeners - elements definitely exist
-        pickButton.addEventListener('click', function() {
-            if (isSpinning || restaurants.length === 0) return;
-            
-            isSpinning = true;
-            pickButton.disabled = true;
-            pickButton.textContent = 'Selecting...';
-            
-            spinAnimation();
-        });
-        
-        document.addEventListener('keydown', function(e) {
-            if (e.code === 'Space' || e.code === 'Enter') {
-                e.preventDefault();
-                if (!isSpinning && restaurants.length > 0) {
-                    pickButton.click();
-                }
-            }
-        });
-    }
-})();
-</script>
+    })();
+    </script>
+</body>
+</html>
