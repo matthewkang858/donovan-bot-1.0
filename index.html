@@ -207,7 +207,7 @@
                 <span class="cuisine-tag">Please Wait</span>
             </div>
             <div class="comments">
-                Loading restaurant data from "Donovan's Summer Seamless Orders - Data.csv"
+                Loading restaurant data from "Donovans Summer Seamless Orders  Data.csv"
             </div>
         </div>
         
@@ -292,8 +292,13 @@
         }
         
         function processRestaurantData(data) {
+            console.log('Processing restaurant data, total rows:', data.length);
+            console.log('Sample row:', data[0]);
+            
             restaurants = data.filter(row => {
-                return row['Overall Score'] && row['Overall Score'] > 3.5;
+                const score = row['Overall Score'];
+                console.log(`Restaurant: ${row.Restuarant}, Score: ${score}`);
+                return score && score > 3.5;
             }).map(row => ({
                 name: row.Restuarant || 'Unknown Restaurant',
                 meal: row.Meal || 'Unknown Meal',
@@ -307,6 +312,9 @@
                 wouldHaveAgain: row['Would Have Again?'] || 0,
                 comments: row['thoughts, opinions, and suggestions'] || ''
             }));
+            
+            console.log(`Filtered ${restaurants.length} restaurants with score > 3.5`);
+            console.log('Sample restaurant:', restaurants[0]);
             
             totalRestaurantsElement.textContent = restaurants.length;
             pickButton.disabled = false;
