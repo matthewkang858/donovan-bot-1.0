@@ -268,8 +268,77 @@
         const pickButton = document.getElementById('pickButton');
         const pickCountElement = document.getElementById('pickCount');
         const totalRestaurantsElement = document.getElementById('totalRestaurants');
+        const csvFileInput = document.getElementById('csvFileInput');
 
-        totalRestaurantsElement.textContent = restaurants.length;
+        // CSV File handling
+        csvFileInput.addEventListener('change', handleCSVFile);
+
+        function handleCSVFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const csvContent = e.target.result;
+                parseCSVData(csvContent);
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSVData(csvContent) {
+            // Skip the first 3 header lines (title, description, column headers)
+            const lines = csvContent.split('\n');
+            const dataLines = lines.slice(3).join('\n');
+            
+            Papa.parse(dataLines, {
+                header: true,
+                dynamicTyping: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    processRestaurantData(results.data);
+                }
+            });
+        }
+
+        function processRestaurantData(data) {
+            // Filter for restaurants with rating > 3.5 and clean the data
+            restaurants = data.filter(row => {
+                return row['Overall Score'] && row['Overall Score'] > 3.5;
+            }).map(row => ({
+                name: row.Restuarant || 'Unknown Restaurant',
+                meal: row.Meal || 'Unknown Meal',
+                cuisine: row['Cuisine(s)'] || 'Unknown',
+                subCuisine: row['Sub-Cuisine'] || 'Unknown',
+                type: row['Lunch/Dinner'] || 'Unknown',
+                valueBudget: row['Value for Budget'] || 0,
+                restaurantQuality: row['Restaurant Quality'] || 0,
+                orderQuality: row['Order Quality'] || 0,
+                overallScore: row['Overall Score'] || 0,
+                wouldHaveAgain: row['Would Have Again?'] || 0,
+                comments: row['thoughts, opinions, and suggestions'] || ''
+            }));
+
+            // Update the display
+            totalRestaurantsElement.textContent = restaurants.length;
+            
+            // Enable the button and update display
+            pickButton.disabled = false;
+            pickButton.textContent = 'Get Recommendation';
+            
+            // Show success message
+            restaurantDisplay.innerHTML = `
+                <div class="restaurant-name">CSV Loaded Successfully!</div>
+                <div class="meal-info">Found ${restaurants.length} highly-rated restaurants</div>
+                <div class="cuisine-tags">
+                    <span class="cuisine-tag">From Donovan's Top Recommendations</span>
+                </div>
+                <div class="comments">
+                    Ready to get recommendations from Donovan's actual order history!
+                </div>
+            `;
+        }
+
+        totalRestaurantsElement.textContent = 0;
 
         function getRandomRestaurant() {
             return restaurants[Math.floor(Math.random() * restaurants.length)];
@@ -347,7 +416,7 @@
         }
 
         pickButton.addEventListener('click', () => {
-            if (isSpinning) return;
+            if (isSpinning || restaurants.length === 0) return;
             
             isSpinning = true;
             pickButton.disabled = true;
@@ -360,7 +429,7 @@
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space' || e.code === 'Enter') {
                 e.preventDefault();
-                if (!isSpinning) {
+                if (!isSpinning && restaurants.length > 0) {
                     pickButton.click();
                 }
             }
